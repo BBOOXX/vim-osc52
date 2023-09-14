@@ -9,3 +9,5 @@ Note for tmux 3.3 or higher users:
 Starting from tmux 3.3, the passthrough escape sequence is now controlled by the 'allow-passthrough' option.
 By default, this option is set to off, which will make this plugin ineffective. To enable the plugin,
 please add `set -g allow-passthrough on` to your tmux configuration file.
+
+See: https://is.gd/ZoO5SX
