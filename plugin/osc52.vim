@@ -5,21 +5,26 @@ endif
 let g:loaded_YankTextToClipboardByOsc52 = 1
 
 function! s:SendViaOSC52(text)
-  let encodedText=substitute(a:text, '\', '\\', 'g')
-  if has('macunix')
-    let encodedText=system('base64 | tr -d \\n', encodedText)
-  elseif has('unix')
-    let encodedText=system('base64 --wrap=0 | tr -d \\n', encodedText)
+  if !has('unix')
+    return
   endif
+  let encodedText=system('base64', a:text)
+  if v:shell_error
+    return
+  endif
+  let encodedText=substitute(encodedText, '[\r\n]', '', 'g')
   " tmux requires unrecognized OSC sequences to be wrapped with <DCS>tmux;<sequence><ST>,
   " and for all ESCs in <sequence> to be replaced with ESC ESC.
   " It only accepts ESC backslash for ST.
-  let OSC = $TMUX != "" ? '\ePtmux;\e\e]' : '\e]'
-  let ST = $TMUX != "" ? '\a\e\\' : '\a'
+  let ESC = nr2char(27)
+  let BEL = nr2char(7)
+  let BSLASH = nr2char(92)
+  let OSC = $TMUX != "" ? ESC.'Ptmux;'.ESC.ESC.']' : ESC.']'
+  let ST = $TMUX != "" ? BEL.ESC.BSLASH : BEL
   " OSC Ps => 52 Manipulate Selection Data
   " see: https://is.gd/nJzw3j
   let executeCmd=OSC.'52;c;'.encodedText.ST
-  call system('echo -en "'.executeCmd.'" > /dev/tty')
+  silent! call writefile([executeCmd], '/dev/tty', 'b')
   "redraw!
 endfunction
 
